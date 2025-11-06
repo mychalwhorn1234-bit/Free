@@ -1,35 +1,70 @@
 # Windows Docker Setup for FORScan Portable
 
-This directory contains Windows-compatible Docker configurations for the FORScan Portable project.
+This directory contains Windows-compatible Docker configurations for the FORScan Portable project, including Python automation support.
 
 ## Prerequisites
 
 - Windows 10/11 with Docker Desktop
-- Windows containers enabled in Docker Desktop
+- Windows containers enabled for FORScan service
+- Linux containers support for Python services
 - PowerShell 5.1 or later
 
 ## Quick Start
 
+### Windows FORScan Container
 ```powershell
-# Build and run the container
-docker-compose up --build
+# Build and run Windows FORScan container
+docker-compose up forscan
 
 # Run in development mode
 docker-compose --profile development up forscan-dev
+```
 
-# Build only
-docker build -t forscan-portable .
+### Python Automation Container
+```powershell
+# Build and run Python automation service
+docker-compose up forscan-python
 
-# Run with custom configuration
-docker run -d --name forscan -v ${PWD}/data:C:/app/forscan/data forscan-portable
+# Run Python development environment
+docker-compose --profile development up python-dev
+```
+
+### Combined Setup
+```powershell
+# Run both Windows FORScan and Python services
+docker-compose up forscan forscan-python
+
+# Build all services
+docker-compose build
 ```
 
 ## Files Overview
 
 - `Dockerfile` - Windows Server Core based container for FORScan
-- `docker-compose.yml` - Multi-service configuration with development profile
+- `Dockerfile.python` - Multi-stage Python container for automation
+- `docker-compose.yml` - Multi-service configuration with both Windows and Python services
 - `.dockerignore` - Excludes unnecessary files from build context
 - `docker-setup.md` - This documentation file
+
+## Services Architecture
+
+### Windows Services (platform: windows/amd64)
+
+- **forscan** - Main FORScan portable application container
+- **forscan-dev** - Development environment for FORScan (development profile)
+
+### Python Services (platform: linux/amd64)
+
+- **forscan-python** - Python automation and API service
+- **python-dev** - Python development environment (development profile)
+
+## Container Communication
+
+The Python service can communicate with the Windows FORScan service through:
+
+- Shared volume mounts (`./data`, `./config`, `./logs`)
+- Network communication (if FORScan exposes network interfaces)
+- File-based data exchange
 
 ## Windows Container Considerations
 

@@ -4,16 +4,27 @@ These instructions help AI coding agents become productive in the `Free` reposit
 
 ## What this repo contains (big picture)
 
-- Top-level folder: `Free/` — currently contains only `README.md` (a portable FORScan tool description and release notes). There is no source code, build scripts, tests, or CI configuration present in the repository at the time of writing.
-- The project appears to be a redistributable Windows portable app (an `.exe`) rather than a source-built project. Treat releases/assets as the primary deliverable until source files appear.
+- **Windows FORScan Application**: Portable executable and Docker container for diagnostic operations
+- **Python Automation Layer**: Complete Python package (`python/forscan/`) with CLI tools, adapters for OBD interfaces (ELM327, J2534, STN), and automation scripts
+- **Multi-platform Docker Setup**: Windows containers for FORScan, Linux containers for Python services, with shared data volumes
+- **Development Environment**: VS Code configuration, testing framework, and development dependencies
+
+The project bridges Windows automotive diagnostics (FORScan) with cross-platform Python automation, enabling programmatic vehicle diagnostics and integration with external systems.
 
 ### Key files to reference (current and future)
 - `README.md` — Product documentation, features, installation steps, and usage examples
 - `.github/copilot-instructions.md` — This file (AI agent guidance)
 - `Dockerfile` — Windows-compatible container configuration
-- `docker-compose.yml` — Multi-service Docker setup with development profile
-- `docker-setup.md` — Docker documentation and Windows-specific instructions
+- `Dockerfile.python` — Multi-stage Python container for automation and development
+- `docker-compose.yml` — Multi-service Docker setup with both Windows and Python services
+- `docker-setup.md` — Docker documentation and Windows/Python-specific instructions
 - `.dockerignore` — Files excluded from Docker build context
+- `requirements.txt` — Python dependencies for FORScan automation
+- `requirements-dev.txt` — Development dependencies including testing and linting tools
+- `setup.py` — Python package configuration and entry points
+- `forscan_config.yaml` — Configuration template for Python tools
+- `python/forscan/` — Python package source code for FORScan automation
+- `scripts/` — Example automation scripts and utilities
 - `.gitignore` — If added, will show what artifacts to exclude (binaries, build outputs)
 - `CHANGELOG.md` — If added, will document version history and release notes
 - `CONTRIBUTING.md` — If added, will contain maintainer guidelines and PR process
@@ -28,9 +39,11 @@ These instructions help AI coding agents become productive in the `Free` reposit
 
 ## Developer workflows & commands
 
-- There are no discoverable build/test/debug commands in the repo. Manual tasks you may be asked to do (packaging, release notes) should reference the README and ask the maintainer for the binary artifacts or release process.
-- **Docker workflows**: Use `docker-compose up --build` for Windows containers, see `docker-setup.md` for detailed instructions
-- **Development**: Use `docker-compose --profile development up forscan-dev` for testing and debugging
+- **Docker workflows**: Use `docker-compose up --build` for Windows containers, `docker-compose up forscan-python` for Python services
+- **Python development**: Use `docker-compose --profile development up python-dev` for testing and debugging Python automation
+- **Mixed environment**: Run both Windows and Python services with `docker-compose up forscan forscan-python`
+- **Python CLI**: Use `python -m forscan.cli` for command-line diagnostic operations
+- **Testing**: Run `pytest python/tests/` for Python package tests
 - Git workflow: repository default branch is `main`. The current branch name is `copilot/*` (feature branch). Follow normal PR flow: small changes on a feature branch, open a PR to `main`, and include a descriptive title and summary.
 
 ## Project-specific conventions and patterns (discoverable)
@@ -143,9 +156,16 @@ build: improve portable .exe packaging script
 ### Quick reference commands (when source is added)
 ```powershell
 # Docker workflows (current)
-docker-compose up --build            # Build and run Windows container
-docker-compose --profile development up forscan-dev  # Development mode
-docker build -t forscan-portable .   # Build container only
+docker-compose up --build                 # Build and run Windows container
+docker-compose up forscan-python          # Run Python automation service
+docker-compose --profile development up python-dev  # Python development mode
+
+# Python workflows (current)
+pip install -e .                          # Install package in development mode
+python -m forscan.cli --help              # Show CLI help
+python -m forscan.cli scan -a ELM327 -p COM1  # Scan for DTCs
+pytest python/tests/                      # Run Python tests
+black python/ scripts/                    # Format Python code
 
 # Typical development workflow (future)
 .\scripts\build.ps1              # Build from source
