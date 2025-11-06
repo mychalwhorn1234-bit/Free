@@ -1,3 +1,0 @@
-[console_scripts]
-forscan-cli = forscan.cli:main
-forscan-server = forscan.server:main
