@@ -78,10 +78,10 @@ class TestFORScanConfig:
 class TestConfig:
     """Tests for Config manager class."""
 
-    def test_init_without_config_file(self, tmp_path):
+    def test_init_without_config_file(self, tmp_path, monkeypatch):
         """Test Config initialization without a config file."""
         # Change to temp directory where config file doesn't exist
-        os.chdir(tmp_path)
+        monkeypatch.chdir(tmp_path)
         config = Config()
         assert config.adapter.type == "ELM327"
         assert config.logging.level == "INFO"
@@ -160,56 +160,55 @@ class TestConfig:
         assert config._safe_bool("yes", False) is True
         assert config._safe_bool("on", False) is True
         assert config._safe_bool("false", True) is False
-        assert (
-            config._safe_bool("invalid", True) is False
-        )  # Invalid strings return False
+        # Note: Invalid strings return False (not in the accepted list)
+        assert config._safe_bool("invalid", True) is False
         assert config._safe_bool(None, False) is False
         assert config._safe_bool(None, True) is True  # None returns default
 
-    def test_update_adapter_config(self, tmp_path):
+    def test_update_adapter_config(self, tmp_path, monkeypatch):
         """Test updating adapter configuration."""
-        os.chdir(tmp_path)
+        monkeypatch.chdir(tmp_path)
         config = Config()
         config.update_adapter_config(type="STN", baudrate=500000)
         assert config.adapter.type == "STN"
         assert config.adapter.baudrate == 500000
 
-    def test_update_logging_config(self, tmp_path):
+    def test_update_logging_config(self, tmp_path, monkeypatch):
         """Test updating logging configuration."""
-        os.chdir(tmp_path)
+        monkeypatch.chdir(tmp_path)
         config = Config()
         config.update_logging_config(level="ERROR", file="error.log")
         assert config.logging.level == "ERROR"
         assert config.logging.file == "error.log"
 
-    def test_update_forscan_config(self, tmp_path):
+    def test_update_forscan_config(self, tmp_path, monkeypatch):
         """Test updating FORScan configuration."""
-        os.chdir(tmp_path)
+        monkeypatch.chdir(tmp_path)
         config = Config()
         config.update_forscan_config(data_dir="/new/data", auto_connect=True)
         assert config.forscan.data_dir == "/new/data"
         assert config.forscan.auto_connect is True
 
-    def test_get_adapter_config(self, tmp_path):
+    def test_get_adapter_config(self, tmp_path, monkeypatch):
         """Test getting adapter configuration as dictionary."""
-        os.chdir(tmp_path)
+        monkeypatch.chdir(tmp_path)
         config = Config()
         adapter_dict = config.get_adapter_config()
         assert isinstance(adapter_dict, dict)
         assert adapter_dict["type"] == "ELM327"
         assert adapter_dict["port"] == "COM1"
 
-    def test_get_logging_config(self, tmp_path):
+    def test_get_logging_config(self, tmp_path, monkeypatch):
         """Test getting logging configuration as dictionary."""
-        os.chdir(tmp_path)
+        monkeypatch.chdir(tmp_path)
         config = Config()
         logging_dict = config.get_logging_config()
         assert isinstance(logging_dict, dict)
         assert logging_dict["level"] == "INFO"
 
-    def test_get_forscan_config(self, tmp_path):
+    def test_get_forscan_config(self, tmp_path, monkeypatch):
         """Test getting FORScan configuration as dictionary."""
-        os.chdir(tmp_path)
+        monkeypatch.chdir(tmp_path)
         config = Config()
         forscan_dict = config.get_forscan_config()
         assert isinstance(forscan_dict, dict)
