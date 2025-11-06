@@ -2,7 +2,6 @@
 Tests for configuration management module.
 """
 
-import os
 import yaml
 from forscan.config import (
     Config,
@@ -128,7 +127,7 @@ class TestConfig:
         monkeypatch.setenv("FORSCAN_ADAPTER_BAUDRATE", "115200")
         monkeypatch.setenv("FORSCAN_LOG_LEVEL", "DEBUG")
 
-        os.chdir(tmp_path)
+        monkeypatch.chdir(tmp_path)
         config = Config()
         assert config.adapter.type == "J2534"
         assert config.adapter.port == "COM5"
