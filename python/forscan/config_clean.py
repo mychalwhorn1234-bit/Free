@@ -5,7 +5,7 @@ Configuration management for FORScan Python tools.
 import os
 import yaml
 import logging
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, fields
 
 
 logger = logging.getLogger(__name__)
@@ -42,11 +42,6 @@ class FORScanConfig:
 
 class Config:
     """Configuration manager."""
-    
-    config_file: str
-    adapter: AdapterConfig
-    logging: LoggingConfig
-    forscan: FORScanConfig
     
     def __init__(self, config_file: str = 'forscan_config.yaml'):
         """Initialize configuration with defaults."""
@@ -259,9 +254,7 @@ class Config:
         
         return errors
     
-    def get_config_dict(
-        self
-    ) -> dict[str, dict[str, str | int | float | bool | None]]:
+    def get_config_dict(self) -> dict[str, dict[str, str | int | float | bool | None]]:
         """Get configuration as dictionary."""
         return {
             'adapter': asdict(self.adapter),
