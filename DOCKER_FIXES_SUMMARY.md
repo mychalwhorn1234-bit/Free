@@ -67,6 +67,7 @@ Successfully identified and resolved Docker configuration issues for the FORScan
 ## Current Status
 
 ### ✅ **Working without Docker**
+
 ```powershell
 # Python package works directly
 python -m forscan.cli --help
@@ -78,6 +79,7 @@ python -m pytest python/tests/ -v  # 28/28 tests passing
 ```
 
 ### 🔧 **Ready for Docker (when installed)**
+
 ```powershell
 # Installation
 .\docker-install.ps1
@@ -93,7 +95,8 @@ docker-compose exec forscan-python python -m forscan.cli info
 ## Validation Results
 
 **Current validation status** (before Docker installation):
-```
+
+```text
 Tests Passed: 3/8
 Tests Failed: 5
 
@@ -110,12 +113,14 @@ Tests Failed: 5
 ## Next Steps
 
 ### For End Users (Recommended)
+
 ```powershell
 # Use Python directly (no Docker required)
 python -m forscan.cli scan --adapter ELM327 --port COM1
 ```
 
 ### For Developers/Automation
+
 ```powershell
 # 1. Install Docker Desktop
 .\docker-install.ps1
@@ -131,6 +136,7 @@ docker-compose exec forscan-python python -m forscan.cli info
 ```
 
 ### If Docker Installation Fails
+
 ```powershell
 # Alternative: Use Python directly
 pip install -r requirements.txt
@@ -151,12 +157,14 @@ python -m forscan.cli --help
 ## Files Created/Modified
 
 ### New Files
+
 - `docker-install.ps1` - Automated Docker installation script
 - `docker-validate.ps1` - Docker validation and testing script  
 - `DOCKER_TROUBLESHOOTING.md` - Comprehensive troubleshooting guide
 - `data/`, `config/`, `logs/` - Required directories for Docker volumes
 
 ### Modified Files
+
 - `docker-compose.yml` - Improved networking, volumes, and service configuration
 - `Dockerfile.python` - Fixed package installation order and optimization
 - `README.md` - Added Docker setup instructions

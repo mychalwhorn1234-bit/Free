@@ -1,0 +1,279 @@
+"""
+Configuration management for FORScan Python tools.
+"""
+
+import os
+import yaml
+import logging
+from dataclasses import dataclass, asdict, fields
+from typing import Any
+
+logger = logging.getLogger(__name__)
+
+
+@dataclass
+class AdapterConfig:
+    """Adapter configuration."""
+    type: str = "ELM327"
+    port: str = "COM1"
+    baudrate: int = 38400
+    timeout: float = 2.0
+
+
+@dataclass
+class LoggingConfig:
+    """Logging configuration."""
+    level: str = "INFO"
+    format: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    file: str | None = None
+
+
+@dataclass
+class FORScanConfig:
+    """FORScan integration configuration."""
+    executable_path: str | None = None
+    data_dir: str = "./data"
+    config_dir: str = "./config"
+    auto_connect: bool = False
+
+
+class Config:
+    """
+    Configuration manager for FORScan Python tools.
+    
+    Handles loading, saving, and accessing configuration settings
+    from YAML files and environment variables.
+    """
+    
+    def __init__(self, config_file: str | None = None):
+        """
+        Initialize configuration manager.
+        
+        Args:
+            config_file: Path to configuration file (optional)
+        """
+        self.config_file: str = config_file or self._find_config_file()
+        self.adapter: AdapterConfig = AdapterConfig()
+        self.logging: LoggingConfig = LoggingConfig()
+        self.forscan: FORScanConfig = FORScanConfig()
+        
+        # Load configuration
+        self.load()
+        self._apply_env_overrides()
+    
+    def _find_config_file(self) -> str:
+        """Find configuration file in standard locations."""
+        possible_paths = [
+            "forscan_config.yaml",
+            "config/forscan_config.yaml",
+            os.path.expanduser("~/.forscan/config.yaml"),
+            "/etc/forscan/config.yaml"
+        ]
+        
+        for path in possible_paths:
+            if os.path.exists(path):
+                return path
+        
+        # Return default path if none found
+        return "forscan_config.yaml"
+    
+    def load(self) -> None:
+        """Load configuration from file."""
+        if not os.path.exists(self.config_file):
+            logger.info(
+                f"Config file {self.config_file} not found, using defaults"
+            )
+            return
+        
+        try:
+            with open(self.config_file, 'r') as f:
+                raw_data = yaml.safe_load(f)
+                data: dict[str, dict[str, str | int | float | bool | None]] = raw_data or {}
+            
+            if not data:
+                return
+            
+            # Load adapter config
+            if 'adapter' in data:
+                adapter_data = data['adapter']
+                # Validate and convert adapter data
+                adapter_config = {
+                    'type': str(adapter_data.get('type', 'ELM327')),
+                    'port': str(adapter_data.get('port', 'COM1')),
+                    'baudrate': int(adapter_data.get('baudrate', 38400)),
+                    'timeout': float(adapter_data.get('timeout', 2.0))
+                }
+                self.adapter = AdapterConfig(**adapter_config)
+            
+            # Load logging config
+            if 'logging' in data:
+                logging_data = data['logging']
+                # Validate and convert logging data
+                logging_config = {
+                    'level': str(logging_data.get('level', 'INFO')),
+                    'format': str(logging_data.get('format', '%(asctime)s - %(name)s - %(levelname)s - %(message)s')),
+                    'file': str(logging_data['file']) if logging_data.get('file') else None
+                }
+                self.logging = LoggingConfig(**logging_config)
+            
+            # Load FORScan config
+            if 'forscan' in data:
+                forscan_data = data['forscan']
+                # Validate and convert FORScan data
+                forscan_config = {
+                    'executable_path': str(forscan_data['executable_path']) if forscan_data.get('executable_path') else None,
+                    'data_dir': str(forscan_data.get('data_dir', './data')),
+                    'config_dir': str(forscan_data.get('config_dir', './config')),
+                    'auto_connect': bool(forscan_data.get('auto_connect', False))
+                }
+                self.forscan = FORScanConfig(**forscan_config)
+            
+            logger.info(f"Configuration loaded from {self.config_file}")
+            
+        except Exception as e:
+            logger.error(f"Failed to load configuration: {e}")
+    
+    def save(self) -> None:
+        """Save configuration to file."""
+        try:
+            # Ensure config directory exists
+            config_dir = os.path.dirname(self.config_file)
+            if config_dir:
+                os.makedirs(config_dir, exist_ok=True)
+            
+            data = {
+                'adapter': asdict(self.adapter),
+                'logging': asdict(self.logging),
+                'forscan': asdict(self.forscan)
+            }
+            
+            with open(self.config_file, 'w') as f:
+                yaml.dump(data, f, default_flow_style=False, indent=2)
+            
+            logger.info(f"Configuration saved to {self.config_file}")
+            
+        except Exception as e:
+            logger.error(f"Failed to save configuration: {e}")
+    
+    def _apply_env_overrides(self) -> None:
+        """Apply environment variable overrides."""
+        # Adapter overrides
+        adapter_type = os.getenv('FORSCAN_ADAPTER_TYPE')
+        if adapter_type:
+            self.adapter.type = adapter_type
+        
+        adapter_port = os.getenv('FORSCAN_ADAPTER_PORT')
+        if adapter_port:
+            self.adapter.port = adapter_port
+        
+        if os.getenv('FORSCAN_ADAPTER_BAUDRATE'):
+            try:
+                baudrate_env = os.getenv('FORSCAN_ADAPTER_BAUDRATE')
+                if baudrate_env:
+                    self.adapter.baudrate = int(baudrate_env)
+            except ValueError:
+                logger.warning("Invalid FORSCAN_ADAPTER_BAUDRATE value")
+        
+        # Logging overrides
+        log_level_env = os.getenv('FORSCAN_LOG_LEVEL')
+        if log_level_env:
+            self.logging.level = log_level_env
+        
+        log_file_env = os.getenv('FORSCAN_LOG_FILE')
+        if log_file_env:
+            self.logging.file = log_file_env
+        
+        # FORScan overrides
+        exec_path_env = os.getenv('FORSCAN_EXECUTABLE_PATH')
+        if exec_path_env:
+            self.forscan.executable_path = exec_path_env
+        
+        data_dir_env = os.getenv('FORSCAN_DATA_DIR')
+        if data_dir_env:
+            self.forscan.data_dir = data_dir_env
+        
+        config_dir_env = os.getenv('FORSCAN_CONFIG_DIR')
+        if config_dir_env:
+            self.forscan.config_dir = config_dir_env
+    
+    def _update_config_section(
+        self,
+        section: AdapterConfig | LoggingConfig | FORScanConfig,
+        values: dict[str, Any],
+        section_name: str
+    ) -> None:
+        """Update dataclass section with filtered values and warn on extras."""
+        if not isinstance(values, dict):
+            logger.warning(
+                "Ignoring %s configuration because it is not a mapping", section_name
+            )
+            return
+        
+        allowed_fields = {field.name for field in fields(section)}
+        filtered_values = {key: values[key] for key in values if key in allowed_fields}
+        
+        for key, value in filtered_values.items():
+            setattr(section, key, value)
+        
+        unknown_keys = set(values) - allowed_fields
+        if unknown_keys:
+            logger.warning(
+                "Ignoring unknown %s configuration keys: %s",
+                section_name,
+                ", ".join(sorted(unknown_keys))
+            )
+    
+    def get_adapter_config(self) -> dict[str, str | int | float | bool]:
+        """Get adapter configuration as dictionary."""
+        return asdict(self.adapter)
+    
+    def get_logging_config(self) -> dict[str, str | None]:
+        """Get logging configuration as dictionary."""
+        return asdict(self.logging)
+    
+    def get_forscan_config(self) -> dict[str, str | bool | None]:
+        """Get FORScan configuration as dictionary."""
+        return asdict(self.forscan)
+    
+    def update_adapter_config(
+        self, **kwargs: str | int | float | bool
+    ) -> None:
+        """Update adapter configuration."""
+        for key, value in kwargs.items():
+            if hasattr(self.adapter, key):
+                setattr(self.adapter, key, value)
+    
+    def update_logging_config(self, **kwargs: str | None) -> None:
+        """Update logging configuration."""
+        for key, value in kwargs.items():
+            if hasattr(self.logging, key):
+                setattr(self.logging, key, value)
+    
+    def update_forscan_config(
+        self, **kwargs: str | bool | None
+    ) -> None:
+        """Update FORScan configuration."""
+        for key, value in kwargs.items():
+            if hasattr(self.forscan, key):
+                setattr(self.forscan, key, value)
+    
+    def setup_logging(self) -> None:
+        """Setup logging based on configuration."""
+        log_level = getattr(logging, self.logging.level.upper(), logging.INFO)
+        
+        # Configure logging
+        logging_config = {  # type: ignore
+            'level': log_level,
+            'format': self.logging.format
+        }
+        
+        if self.logging.file:
+            # Ensure log directory exists
+            log_dir = os.path.dirname(self.logging.file)
+            if log_dir:
+                os.makedirs(log_dir, exist_ok=True)
+            
+            logging_config['filename'] = self.logging.file
+        
+        logging.basicConfig(**logging_config)
+        logger.info("Logging configured")
