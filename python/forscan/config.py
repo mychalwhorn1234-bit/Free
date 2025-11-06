@@ -199,7 +199,7 @@ class Config:
     def _update_config_section(
         self,
         section: AdapterConfig | LoggingConfig | FORScanConfig,
-        values: dict[str, Any],
+        values: dict[str, str | int | float | bool | None],
         section_name: str
     ) -> None:
         """Update dataclass section with filtered values and warn on extras."""
@@ -261,8 +261,8 @@ class Config:
         """Setup logging based on configuration."""
         log_level = getattr(logging, self.logging.level.upper(), logging.INFO)
         
-        # Configure logging
-        logging_config = {  # type: ignore
+        # Configure logging with proper typing
+        logging_config: dict[str, str | int] = {
             'level': log_level,
             'format': self.logging.format
         }
