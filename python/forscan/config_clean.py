@@ -5,6 +5,7 @@ import os
 import yaml
 import logging
 from dataclasses import dataclass, asdict, fields
+from typing import Optional
 logger = logging.getLogger(__name__)
 @dataclass
 class AdapterConfig:
@@ -18,11 +19,11 @@ class LoggingConfig:
     """Logging configuration."""
     level: str = "INFO"
     format: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-    file: str | None = None
+    file: Optional[str] = None
 @dataclass
 class FORScanConfig:
     """FORScan integration configuration."""
-    executable_path: str | None = None
+    executable_path: Optional[str] = None
     data_dir: str = "./data"
     config_dir: str = "./config"
     auto_connect: bool = False
@@ -32,7 +33,7 @@ class Config:
     Handles loading, saving, and accessing configuration settings
     from YAML files and environment variables.
     """
-    def __init__(self, config_file: str | None = None):
+    def __init__(self, config_file: Optional[str] = None):
         """
         Initialize configuration manager.
         Args:
@@ -67,8 +68,7 @@ class Config:
             return
         try:
             with open(self.config_file, 'r') as f:
-                raw_data = yaml.safe_load(f)
-                # Type cast YAML data safely
+                raw_data: dict[str, dict[str, str | int | float | bool | None]] | None = yaml.safe_load(f)
                 data: dict[str, dict[str, str | int | float | bool | None]] = (
                     raw_data if isinstance(raw_data, dict) else {}
                 )
@@ -275,8 +275,8 @@ class Config:
     def setup_logging(self) -> None:
         """Setup logging based on configuration."""
         log_level = getattr(logging, self.logging.level.upper(), logging.INFO)
-        # Build configuration dictionary with proper types
-        config_args: dict[str, str | int] = {
+        # Configure logging with explicit type annotations
+        basic_config_kwargs: dict[str, str | int] = {
             'level': log_level,
             'format': self.logging.format
         }
@@ -285,12 +285,6 @@ class Config:
             log_dir = os.path.dirname(self.logging.file)
             if log_dir:
                 os.makedirs(log_dir, exist_ok=True)
-            config_args['filename'] = self.logging.file
-        # Type cast for logging.basicConfig
-        logging.basicConfig(
-            level=config_args['level'],
-            format=str(config_args['format']),
-            filename=str(config_args.get('filename')) if 'filename' in config_args else None
-        )
+            basic_config_kwargs['filename'] = self.logging.file
+        logging.basicConfig(**basic_config_kwargs)
         logger.info("Logging configured")
-
