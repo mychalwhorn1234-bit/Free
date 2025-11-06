@@ -15,7 +15,6 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
 from forscan import FORScanConnector, DiagnosticSession, Config
-from forscan.adapters import ELM327Adapter, J2534Adapter
 
 logger = logging.getLogger(__name__)
 
@@ -285,12 +284,13 @@ async def get_vehicle_info():
                 detail="Vehicle information not available"
             )
         
+        # Safely access vehicle_info attributes with defaults
         return VehicleInfoResponse(
-            make=vehicle_info.make,
-            model=vehicle_info.model,
-            year=vehicle_info.year,
-            vin=vehicle_info.vin,
-            engine=vehicle_info.engine
+            make=getattr(vehicle_info, 'make', 'Unknown'),
+            model=getattr(vehicle_info, 'model', 'Unknown'),
+            year=getattr(vehicle_info, 'year', 0),
+            vin=getattr(vehicle_info, 'vin', None),
+            engine=getattr(vehicle_info, 'engine', None)
         )
         
     except HTTPException:
@@ -322,6 +322,11 @@ async def read_dtcs():
     
     try:
         dtc_data = _connector.read_dtcs()
+        
+        # Validate dtc_data is a dictionary
+        if not isinstance(dtc_data, dict):
+            logger.warning(f"Unexpected DTC data type: {type(dtc_data)}")
+            dtc_data = {}
         
         return DTCResponse(
             dtcs=dtc_data.get("dtcs", []),
