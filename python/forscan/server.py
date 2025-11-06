@@ -8,6 +8,7 @@ and configuration management.
 
 import logging
 import uvicorn
+from contextlib import asynccontextmanager
 from typing import Dict, List, Any, Optional
 from fastapi import FastAPI, HTTPException, status
 from fastapi.responses import JSONResponse
@@ -55,26 +56,18 @@ class HealthResponse(BaseModel):
     connected: bool
 
 
-# Initialize FastAPI app
-app = FastAPI(
-    title="FORScan Python API",
-    description="REST API for FORScan diagnostic automation",
-    version="0.1.0",
-    docs_url="/docs",
-    redoc_url="/redoc"
-)
-
 # Global state
 _config: Optional[Config] = None
 _connector: Optional[FORScanConnector] = None
 _session: Optional[DiagnosticSession] = None
 
 
-@app.on_event("startup")
-async def startup_event():
-    """Initialize server on startup."""
-    global _config, _connector
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Manage application lifespan (startup and shutdown)."""
+    global _config, _connector, _session
     
+    # Startup
     logger.info("Starting FORScan API server")
     
     # Load configuration
@@ -85,13 +78,10 @@ async def startup_event():
     _connector = FORScanConnector(_config.get_forscan_config())
     
     logger.info("FORScan API server started successfully")
-
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Cleanup on server shutdown."""
-    global _connector, _session
     
+    yield
+    
+    # Shutdown
     logger.info("Shutting down FORScan API server")
     
     # End session if active
@@ -103,6 +93,17 @@ async def shutdown_event():
         _connector.disconnect()
     
     logger.info("FORScan API server stopped")
+
+
+# Initialize FastAPI app
+app = FastAPI(
+    title="FORScan Python API",
+    description="REST API for FORScan diagnostic automation",
+    version="0.1.0",
+    docs_url="/docs",
+    redoc_url="/redoc",
+    lifespan=lifespan
+)
 
 
 @app.get("/", response_model=Dict[str, str])
@@ -446,12 +447,13 @@ async def end_session():
         )
 
 
-def main(host: str = "0.0.0.0", port: int = 8000, reload: bool = False):
+def main(host: str = "127.0.0.1", port: int = 8000, reload: bool = False):
     """
     Start the FORScan API server.
     
     Args:
-        host: Host to bind to (default: 0.0.0.0)
+        host: Host to bind to (default: 127.0.0.1 for localhost only)
+             Use 0.0.0.0 to expose on all network interfaces (not recommended for production)
         port: Port to bind to (default: 8000)
         reload: Enable auto-reload for development (default: False)
     """
