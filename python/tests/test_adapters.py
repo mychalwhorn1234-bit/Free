@@ -4,7 +4,9 @@ Tests for adapter implementations.
 
 import pytest
 from unittest.mock import Mock, patch
-from forscan.adapters import BaseAdapter, ELM327Adapter, J2534Adapter, STNAdapter
+from forscan.adapters import (
+    BaseAdapter, ELM327Adapter, J2534Adapter, STNAdapter
+)
 
 
 class TestBaseAdapter:
