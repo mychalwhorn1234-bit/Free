@@ -1,0 +1,24 @@
+# Core dependencies for FORScan Python automation
+requests>=2.31.0
+pyyaml>=6.0
+click>=8.1.0
+rich>=13.0.0
+pydantic>=2.0.0
+loguru>=0.7.0
+
+# Data processing and analysis
+pandas>=2.0.0
+numpy>=1.24.0
+
+# Serial communication for OBD adapters
+pyserial>=3.5
+
+# Configuration management
+python-dotenv>=1.0.0
+
+# API framework (optional)
+fastapi>=0.100.0
+uvicorn>=0.23.0
+
+# Testing framework
+pytest>=7.4.0

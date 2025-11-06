@@ -1,3 +1,13 @@
 {
-    "DockerRun.DisableDockerrc": true
+    "DockerRun.DisableDockerrc": true,
+    "docker.dockerComposeBuild": true,
+    "docker.dockerComposeDetached": true,
+    "docker.defaultRegistryPath": "",
+    "docker.enableDockerComposeLanguageService": true,
+    "docker.showStartPage": false,
+    "docker.containers.groupBy": "Compose Project Name",
+    "docker.containers.sortBy": "CreatedTime",
+    "docker.images.groupBy": "Repository",
+    "docker.networks.groupBy": "CreatedTime",
+    "docker.volumes.groupBy": "CreatedTime"
 }
