@@ -4,11 +4,13 @@ Diagnostic session management and utilities.
 
 import logging
 import time
-from typing import Dict, List, Any, Optional
 from dataclasses import dataclass
 from datetime import datetime
 
 logger = logging.getLogger(__name__)
+
+# Constants
+NO_ACTIVE_SESSION_MSG = "No active diagnostic session"
 
 
 @dataclass
@@ -17,8 +19,8 @@ class DiagnosticTroubleCode:
     code: str
     description: str
     status: str
-    freeze_frame: Optional[Dict[str, Any]] = None
-    timestamp: Optional[datetime] = None
+    freeze_frame: dict[str, str | int | float] | None = None
+    timestamp: datetime | None = None
 
 
 @dataclass
@@ -26,10 +28,10 @@ class LiveDataParameter:
     """Live data parameter structure."""
     pid: str
     name: str
-    value: Any
+    value: str | int | float
     unit: str
-    min_value: Optional[float] = None
-    max_value: Optional[float] = None
+    min_value: float | None = None
+    max_value: float | None = None
 
 
 class DiagnosticSession:
@@ -50,9 +52,9 @@ class DiagnosticSession:
         """
         self.connector = connector
         self.session_active = False
-        self.start_time: Optional[datetime] = None
-        self.dtcs: List[DiagnosticTroubleCode] = []
-        self.live_data: Dict[str, LiveDataParameter] = {}
+        self.start_time: datetime | None = None
+        self.dtcs: list[DiagnosticTroubleCode] = []
+        self.live_data: dict[str, LiveDataParameter] = {}
         
     def start_session(self) -> bool:
         """
@@ -79,24 +81,24 @@ class DiagnosticSession:
     def end_session(self) -> None:
         """End diagnostic session."""
         if self.session_active:
-            duration = datetime.now() - self.start_time if self.start_time else None
+            duration = (
+                datetime.now() - self.start_time 
+                if self.start_time else None
+            )
             logger.info(f"Diagnostic session ended (duration: {duration})")
             
             self.session_active = False
             self.start_time = None
     
-    def scan_dtcs(self, modules: Optional[List[str]] = None) -> List[DiagnosticTroubleCode]:
+    def scan_dtcs(self) -> list[DiagnosticTroubleCode]:
         """
         Scan for diagnostic trouble codes.
         
-        Args:
-            modules: List of module names to scan (None for all)
-            
         Returns:
             List of DTCs found
         """
         if not self.session_active:
-            logger.error("No active diagnostic session")
+            logger.error(NO_ACTIVE_SESSION_MSG)
             return []
         
         try:
@@ -121,18 +123,15 @@ class DiagnosticSession:
             logger.error(f"DTC scan failed: {e}")
             return []
     
-    def clear_dtcs(self, modules: Optional[List[str]] = None) -> bool:
+    def clear_dtcs(self) -> bool:
         """
         Clear diagnostic trouble codes.
         
-        Args:
-            modules: List of module names to clear (None for all)
-            
         Returns:
             True if clearing successful
         """
         if not self.session_active:
-            logger.error("No active diagnostic session")
+            logger.error(NO_ACTIVE_SESSION_MSG)
             return False
         
         try:
@@ -149,7 +148,9 @@ class DiagnosticSession:
             logger.error(f"Failed to clear DTCs: {e}")
             return False
     
-    def read_live_data(self, pids: List[str]) -> Dict[str, LiveDataParameter]:
+    def read_live_data(
+        self, pids: list[str]
+    ) -> dict[str, LiveDataParameter]:
         """
         Read live data parameters.
         
@@ -160,7 +161,7 @@ class DiagnosticSession:
             Dictionary of live data parameters
         """
         if not self.session_active:
-            logger.error("No active diagnostic session")
+            logger.error(NO_ACTIVE_SESSION_MSG)
             return {}
         
         try:
@@ -193,7 +194,11 @@ class DiagnosticSession:
             logger.error(f"Failed to read live data: {e}")
             return {}
     
-    def perform_service_procedure(self, procedure_name: str, parameters: Dict[str, Any] = None) -> bool:
+    def perform_service_procedure(
+        self, 
+        procedure_name: str, 
+        parameters: dict[str, str | int | float] | None = None
+    ) -> bool:
         """
         Perform service procedure.
         
@@ -205,7 +210,7 @@ class DiagnosticSession:
             True if procedure completed successfully
         """
         if not self.session_active:
-            logger.error("No active diagnostic session")
+            logger.error(NO_ACTIVE_SESSION_MSG)
             return False
         
         parameters = parameters or {}
@@ -240,7 +245,7 @@ class DiagnosticSession:
             logger.error(f"Service procedure failed: {e}")
             return False
     
-    def get_session_summary(self) -> Dict[str, Any]:
+    def get_session_summary(self) -> dict[str, str | bool | int | None]:
         """
         Get summary of current diagnostic session.
         
@@ -253,7 +258,9 @@ class DiagnosticSession:
         
         return {
             "session_active": self.session_active,
-            "start_time": self.start_time.isoformat() if self.start_time else None,
+            "start_time": (
+                self.start_time.isoformat() if self.start_time else None
+            ),
             "duration": duration,
             "dtc_count": len(self.dtcs),
             "live_data_parameters": len(self.live_data),

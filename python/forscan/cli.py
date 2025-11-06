@@ -14,6 +14,10 @@ from forscan import FORScanConnector, DiagnosticSession, Config
 console = Console()
 logger = logging.getLogger(__name__)
 
+# Constants for repeated messages
+FAILED_CONNECT_MSG = "[red]Failed to connect to vehicle[/red]"
+FAILED_SESSION_MSG = "[red]Failed to start diagnostic session[/red]"
+
 
 @click.group()
 @click.option('--config', '-c', help='Configuration file path')
@@ -34,7 +38,10 @@ def cli(ctx, config, verbose):
 
 
 @cli.command()
-@click.option('--adapter', '-a', default='ELM327', help='Adapter type (ELM327, J2534, STN)')
+@click.option(
+    '--adapter', '-a', default='ELM327', 
+    help='Adapter type (ELM327, J2534, STN)'
+)
 @click.option('--port', '-p', default='COM1', help='Communication port')
 @click.pass_context
 def connect(ctx, adapter, port):
@@ -50,7 +57,9 @@ def connect(ctx, adapter, port):
         connector = FORScanConnector(config.get_forscan_config())
         
         # Attempt connection
-        rprint(f"[blue]Connecting to vehicle via {adapter} on {port}...[/blue]")
+        rprint(
+            f"[blue]Connecting to vehicle via {adapter} on {port}...[/blue]"
+        )
         
         if connector.connect(adapter, port):
             rprint("[green]✓ Successfully connected to vehicle[/green]")
@@ -58,7 +67,11 @@ def connect(ctx, adapter, port):
             # Get vehicle info
             vehicle_info = connector.get_vehicle_info()
             if vehicle_info:
-                rprint(f"[cyan]Vehicle: {vehicle_info.year} {vehicle_info.make} {vehicle_info.model}[/cyan]")
+                vehicle_text = (
+                    f"Vehicle: {vehicle_info.year} {vehicle_info.make} "
+                    f"{vehicle_info.model}"
+                )
+                rprint(f"[cyan]{vehicle_text}[/cyan]")
                 if vehicle_info.vin:
                     rprint(f"[cyan]VIN: {vehicle_info.vin}[/cyan]")
         else:
@@ -86,11 +99,11 @@ def scan(ctx, adapter, port):
         rprint(f"[blue]Connecting via {adapter} on {port}...[/blue]")
         
         if not connector.connect(adapter, port):
-            rprint("[red]Failed to connect to vehicle[/red]")
+            rprint(FAILED_CONNECT_MSG)
             return
         
         if not session.start_session():
-            rprint("[red]Failed to start diagnostic session[/red]")
+            rprint(FAILED_SESSION_MSG)
             return
         
         # Scan for DTCs
@@ -108,7 +121,8 @@ def scan(ctx, adapter, port):
                 table.add_row(dtc.code, dtc.description, dtc.status)
             
             console.print(table)
-            rprint(f"\n[yellow]Found {len(dtcs)} diagnostic trouble codes[/yellow]")
+            dtc_count_msg = f"Found {len(dtcs)} diagnostic trouble codes"
+            rprint(f"\n[yellow]{dtc_count_msg}[/yellow]")
         else:
             rprint("[green]✓ No diagnostic trouble codes found[/green]")
         
@@ -137,18 +151,19 @@ def clear(ctx, adapter, port):
         
         # Connect and start session
         if not connector.connect(adapter, port):
-            rprint("[red]Failed to connect to vehicle[/red]")
+            rprint(FAILED_CONNECT_MSG)
             return
         
         if not session.start_session():
-            rprint("[red]Failed to start diagnostic session[/red]")
+            rprint(FAILED_SESSION_MSG)
             return
         
         # Clear DTCs
         rprint("[blue]Clearing diagnostic trouble codes...[/blue]")
         
         if session.clear_dtcs():
-            rprint("[green]✓ Diagnostic trouble codes cleared successfully[/green]")
+            success_msg = "Diagnostic trouble codes cleared successfully"
+            rprint(f"[green]✓ {success_msg}[/green]")
         else:
             rprint("[red]✗ Failed to clear diagnostic trouble codes[/red]")
         
@@ -161,7 +176,9 @@ def clear(ctx, adapter, port):
 
 
 @cli.command()
-@click.option('--procedure', '-p', required=True, help='Service procedure name')
+@click.option(
+    '--procedure', '-p', required=True, help='Service procedure name'
+)
 @click.option('--adapter', '-a', default='ELM327', help='Adapter type')
 @click.option('--port', default='COM1', help='Communication port')
 @click.pass_context
@@ -177,18 +194,19 @@ def service(ctx, procedure, adapter, port):
         
         # Connect and start session
         if not connector.connect(adapter, port):
-            rprint("[red]Failed to connect to vehicle[/red]")
+            rprint(FAILED_CONNECT_MSG)
             return
         
         if not session.start_session():
-            rprint("[red]Failed to start diagnostic session[/red]")
+            rprint(FAILED_SESSION_MSG)
             return
         
         # Perform service procedure
         rprint(f"[blue]Performing service procedure: {procedure}[/blue]")
         
         if session.perform_service_procedure(procedure):
-            rprint(f"[green]✓ Service procedure '{procedure}' completed successfully[/green]")
+            success_msg = f"Service procedure '{procedure}' completed successfully"
+            rprint(f"[green]✓ {success_msg}[/green]")
         else:
             rprint(f"[red]✗ Service procedure '{procedure}' failed[/red]")
         

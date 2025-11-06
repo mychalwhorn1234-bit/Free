@@ -1,0 +1,15 @@
+README.md
+setup.py
+python/forscan/__init__.py
+python/forscan/adapters.py
+python/forscan/cli.py
+python/forscan/config.py
+python/forscan/core.py
+python/forscan/diagnostics.py
+python/forscan_python.egg-info/PKG-INFO
+python/forscan_python.egg-info/SOURCES.txt
+python/forscan_python.egg-info/dependency_links.txt
+python/forscan_python.egg-info/entry_points.txt
+python/forscan_python.egg-info/not-zip-safe
+python/forscan_python.egg-info/requires.txt
+python/forscan_python.egg-info/top_level.txt

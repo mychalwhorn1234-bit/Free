@@ -5,7 +5,6 @@ Adapter implementations for different OBD interfaces.
 import logging
 import time
 from abc import ABC, abstractmethod
-from typing import Optional, Dict, Any
 import serial
 
 logger = logging.getLogger(__name__)
@@ -24,7 +23,7 @@ class BaseAdapter(ABC):
         """
         self.port = port
         self.baudrate = baudrate
-        self.connection: Optional[serial.Serial] = None
+        self.connection: serial.Serial | None = None
         self.connected = False
     
     @abstractmethod
@@ -150,8 +149,8 @@ class J2534Adapter(BaseAdapter):
         """
         super().__init__("", 0)  # J2534 doesn't use serial ports
         self.device_name = device_name
-        self.device_id: Optional[int] = None
-        self.channel_id: Optional[int] = None
+        self.device_id: int | None = None
+        self.channel_id: int | None = None
     
     def connect(self) -> bool:
         """

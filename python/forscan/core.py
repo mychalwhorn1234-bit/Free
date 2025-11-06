@@ -3,10 +3,12 @@ Core FORScan connector and utilities.
 """
 
 import logging
-from typing import Optional, Dict, Any
 from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
+
+# Constants
+NOT_CONNECTED_MSG = "Not connected to vehicle"
 
 
 @dataclass
@@ -15,8 +17,8 @@ class VehicleInfo:
     make: str
     model: str
     year: int
-    vin: Optional[str] = None
-    engine: Optional[str] = None
+    vin: str | None = None
+    engine: str | None = None
 
 
 class FORScanConnector:
@@ -27,20 +29,24 @@ class FORScanConnector:
     and managing diagnostic sessions.
     """
     
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(
+        self, config: dict[str, str | int | bool] | None = None
+    ):
         """
         Initialize FORScan connector.
         
         Args:
             config: Optional configuration dictionary
         """
-        self.config = config or {}
-        self.connected = False
-        self.vehicle_info: Optional[VehicleInfo] = None
+        self.config: dict[str, str | int | bool] = config or {}
+        self.connected: bool = False
+        self.vehicle_info: VehicleInfo | None = None
         
         logger.info("FORScanConnector initialized")
     
-    def connect(self, adapter_type: str = "ELM327", port: str = "COM1") -> bool:
+    def connect(
+        self, adapter_type: str = "ELM327", port: str = "COM1"
+    ) -> bool:
         """
         Connect to vehicle via specified adapter.
         
@@ -71,7 +77,7 @@ class FORScanConnector:
             logger.info("Disconnecting from vehicle")
             self.connected = False
     
-    def get_vehicle_info(self) -> Optional[VehicleInfo]:
+    def get_vehicle_info(self) -> VehicleInfo | None:
         """
         Retrieve vehicle information.
         
@@ -79,7 +85,7 @@ class FORScanConnector:
             VehicleInfo object if available, None otherwise
         """
         if not self.connected:
-            logger.warning("Not connected to vehicle")
+            logger.warning(NOT_CONNECTED_MSG)
             return None
         
         # Placeholder for actual vehicle info retrieval
@@ -92,7 +98,7 @@ class FORScanConnector:
         
         return self.vehicle_info
     
-    def read_dtcs(self) -> Dict[str, Any]:
+    def read_dtcs(self) -> dict[str, list[dict[str, str]] | int]:
         """
         Read diagnostic trouble codes.
         
@@ -100,13 +106,16 @@ class FORScanConnector:
             Dictionary containing DTC information
         """
         if not self.connected:
-            logger.warning("Not connected to vehicle")
+            logger.warning(NOT_CONNECTED_MSG)
             return {}
         
         # Placeholder for actual DTC reading
         return {
             "dtcs": [
-                {"code": "P0300", "description": "Random/Multiple Cylinder Misfire Detected"},
+                {
+                    "code": "P0300",
+                    "description": "Random/Multiple Cylinder Misfire Detected"
+                },
                 {"code": "B1234", "description": "Example Body Code"}
             ],
             "count": 2
@@ -120,7 +129,7 @@ class FORScanConnector:
             True if successful, False otherwise
         """
         if not self.connected:
-            logger.warning("Not connected to vehicle")
+            logger.warning(NOT_CONNECTED_MSG)
             return False
         
         # Placeholder for actual DTC clearing

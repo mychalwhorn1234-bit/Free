@@ -16,7 +16,7 @@ from .config import Config
 
 __all__ = [
     "FORScanConnector",
-    "ELM327Adapter", 
+    "ELM327Adapter",
     "J2534Adapter",
     "DiagnosticSession",
     "Config",

@@ -35,8 +35,9 @@ WORKDIR /app
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
-    git \
     curl \
+    git \
+    vim \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy Python requirements and install dependencies
@@ -68,8 +69,8 @@ WORKDIR /app
 
 # Install development tools
 RUN apt-get update && apt-get install -y \
-    git \
     curl \
+    git \
     vim \
     && rm -rf /var/lib/apt/lists/*
 

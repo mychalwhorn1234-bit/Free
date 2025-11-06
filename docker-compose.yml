@@ -1,4 +1,11 @@
-version: '3.8'
+networks:
+  forscan-network:
+    driver: bridge
+
+volumes:
+  forscan-data:
+  forscan-config:
+  forscan-logs:
 
 services:
   # Windows FORScan service
@@ -7,16 +14,16 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: forscan-portable
-    # Use Windows containers
+    # Use Windows containers (requires Docker Desktop with Windows containers enabled)
     platform: windows/amd64
     
     # Mount volumes using Windows path syntax
     volumes:
-      - type: bind
-        source: ./data
+      - type: volume
+        source: forscan-data
         target: C:/app/forscan/data
-      - type: bind
-        source: ./config
+      - type: volume
+        source: forscan-config
         target: C:/app/forscan/config
     
     # Environment variables for Windows
@@ -25,9 +32,9 @@ services:
       FORSCAN_DATA_DIR: "C:/app/forscan/data"
       FORSCAN_CONFIG_DIR: "C:/app/forscan/config"
     
-    # Network configuration (if needed for adapter communication)
-    # ports:
-    #   - "8080:8080"
+    # Network configuration
+    networks:
+      - forscan-network
     
     # Resource limits for Windows containers
     deploy:
@@ -50,7 +57,7 @@ services:
       retries: 3
       start_period: 40s
 
-  # Python automation service
+  # Python automation service (Linux container)
   forscan-python:
     build:
       context: .
@@ -60,18 +67,19 @@ services:
     platform: linux/amd64
     
     volumes:
-      - type: bind
-        source: ./data
+      - type: volume
+        source: forscan-data
         target: /app/data
-      - type: bind
-        source: ./config
+      - type: volume
+        source: forscan-config
         target: /app/config
-      - type: bind
-        source: ./logs
+      - type: volume
+        source: forscan-logs
         target: /app/logs
       - type: bind
         source: ./python
         target: /app/python
+        read_only: true
     
     environment:
       PYTHONPATH: "/app"
@@ -84,8 +92,12 @@ services:
       - "8000:8000"  # API server
       - "5000:5000"  # Development server
     
-    depends_on:
-      - forscan
+    networks:
+      - forscan-network
+    
+    # Don't depend on Windows container since they can't communicate directly
+    # depends_on:
+    #   - forscan
     
     restart: unless-stopped
     
@@ -96,7 +108,7 @@ services:
       retries: 3
       start_period: 20s
 
-# Optional: Service for development/testing
+# Development services (use with --profile development)
   forscan-dev:
     build:
       context: .
@@ -108,11 +120,11 @@ services:
       - type: bind
         source: .
         target: C:/app
-      - type: bind
-        source: ./data
+      - type: volume
+        source: forscan-data
         target: C:/app/forscan/data
-      - type: bind
-        source: ./config
+      - type: volume
+        source: forscan-config
         target: C:/app/forscan/config
     
     environment:
@@ -121,13 +133,15 @@ services:
       FORSCAN_DATA_DIR: "C:/app/forscan/data"
       FORSCAN_CONFIG_DIR: "C:/app/forscan/config"
     
+    networks:
+      - forscan-network
+    
     # Override default command for development
     command: powershell -Command "Write-Host 'FORScan development container ready'; Start-Sleep -Seconds 3600"
     
     profiles:
       - development
 
-  # Python development environment
   python-dev:
     build:
       context: .
@@ -140,14 +154,14 @@ services:
       - type: bind
         source: .
         target: /app
-      - type: bind
-        source: ./data
+      - type: volume
+        source: forscan-data
         target: /app/data
-      - type: bind
-        source: ./config
+      - type: volume
+        source: forscan-config
         target: /app/config
-      - type: bind
-        source: ./logs
+      - type: volume
+        source: forscan-logs
         target: /app/logs
     
     environment:
@@ -161,6 +175,9 @@ services:
     ports:
       - "8001:8000"  # Development API server
       - "5001:5000"  # Development server
+    
+    networks:
+      - forscan-network
     
     command: python -c "print('Python development environment ready'); import time; time.sleep(3600)"
     

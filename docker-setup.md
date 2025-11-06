@@ -12,6 +12,7 @@ This directory contains Windows-compatible Docker configurations for the FORScan
 ## Quick Start
 
 ### Windows FORScan Container
+
 ```powershell
 # Build and run Windows FORScan container
 docker-compose up forscan
@@ -21,6 +22,7 @@ docker-compose --profile development up forscan-dev
 ```
 
 ### Python Automation Container
+
 ```powershell
 # Build and run Python automation service
 docker-compose up forscan-python
@@ -30,6 +32,7 @@ docker-compose --profile development up python-dev
 ```
 
 ### Combined Setup
+
 ```powershell
 # Run both Windows FORScan and Python services
 docker-compose up forscan forscan-python
