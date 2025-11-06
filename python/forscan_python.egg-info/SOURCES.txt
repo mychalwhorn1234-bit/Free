@@ -4,6 +4,7 @@ python/forscan/__init__.py
 python/forscan/adapters.py
 python/forscan/cli.py
 python/forscan/config.py
+python/forscan/config_clean.py
 python/forscan/core.py
 python/forscan/diagnostics.py
 python/forscan_python.egg-info/PKG-INFO

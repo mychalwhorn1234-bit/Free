@@ -1,4 +1,4 @@
-Metadata-Version: 2.4
+Metadata-Version: 2.1
 Name: forscan-python
 Version: 0.1.0
 Summary: Python automation tools for FORScan diagnostics
@@ -18,35 +18,7 @@ Classifier: Topic :: System :: Hardware
 Classifier: Topic :: Software Development :: Libraries :: Python Modules
 Requires-Python: >=3.8
 Description-Content-Type: text/markdown
-Requires-Dist: requests>=2.31.0
-Requires-Dist: pyyaml>=6.0
-Requires-Dist: click>=8.1.0
-Requires-Dist: rich>=13.0.0
-Requires-Dist: pydantic>=2.0.0
-Requires-Dist: loguru>=0.7.0
-Requires-Dist: pandas>=2.0.0
-Requires-Dist: numpy>=1.24.0
-Requires-Dist: pyserial>=3.5
-Requires-Dist: python-dotenv>=1.0.0
-Requires-Dist: fastapi>=0.100.0
-Requires-Dist: uvicorn>=0.23.0
-Requires-Dist: pytest>=7.4.0
 Provides-Extra: dev
-Requires-Dist: pytest>=7.4.0; extra == "dev"
-Requires-Dist: pytest-cov>=4.1.0; extra == "dev"
-Requires-Dist: black>=23.0.0; extra == "dev"
-Requires-Dist: flake8>=6.0.0; extra == "dev"
-Requires-Dist: mypy>=1.5.0; extra == "dev"
-Requires-Dist: isort>=5.12.0; extra == "dev"
-Dynamic: author
-Dynamic: classifier
-Dynamic: description
-Dynamic: description-content-type
-Dynamic: home-page
-Dynamic: provides-extra
-Dynamic: requires-dist
-Dynamic: requires-python
-Dynamic: summary
 
 # FORScan Portable
 
@@ -57,11 +29,39 @@ Dynamic: summary
 
 ## ⚙️ Installation Instructions
 
+### Windows Executable (Recommended for end users)
+
 ```text
 1. 📦 Download from Releases  
 2. 📁 Extract to any folder  
 3. 🖱 Run the .exe  
 4. ✅ Done!
+```
+
+### Docker Setup (For developers and automation)
+
+```powershell
+# 1. Install Docker Desktop for Windows
+.\docker-install.ps1
+
+# 2. Start Python automation service
+docker-compose up -d forscan-python
+
+# 3. Test the setup
+docker-compose exec forscan-python python -m forscan.cli info
+```
+
+### Python Development Setup
+
+```powershell
+# 1. Install Python dependencies
+pip install -r requirements.txt
+
+# 2. Test the Python tools
+python -m forscan.cli --help
+
+# 3. Run diagnostics
+python -m forscan.cli scan --adapter ELM327 --port COM1
 ```
 
 ---
