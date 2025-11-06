@@ -6,7 +6,7 @@ import os
 import yaml
 import logging
 from dataclasses import dataclass, asdict, fields
-from typing import Any
+
 
 logger = logging.getLogger(__name__)
 
@@ -88,43 +88,67 @@ class Config:
         try:
             with open(self.config_file, 'r') as f:
                 raw_data = yaml.safe_load(f)
-                data: dict[str, dict[str, str | int | float | bool | None]] = raw_data or {}
+                # Type cast YAML data safely
+                data: dict[str, dict[str, str | int | float | bool | None]] = (
+                    raw_data if isinstance(raw_data, dict) else {}
+                )
             
             if not data:
                 return
             
-            # Load adapter config
+            # Load adapter config with safe type conversion
             if 'adapter' in data:
                 adapter_data = data['adapter']
-                # Validate and convert adapter data
+                # Use safe conversion methods to avoid type errors
                 adapter_config = {
-                    'type': str(adapter_data.get('type', 'ELM327')),
-                    'port': str(adapter_data.get('port', 'COM1')),
-                    'baudrate': int(adapter_data.get('baudrate', 38400)),
-                    'timeout': float(adapter_data.get('timeout', 2.0))
+                    'type': str(adapter_data.get('type') or 'ELM327'),
+                    'port': str(adapter_data.get('port') or 'COM1'),
+                    'baudrate': self._safe_int(
+                        adapter_data.get('baudrate'), 38400
+                    ),
+                    'timeout': self._safe_float(
+                        adapter_data.get('timeout'), 2.0
+                    )
                 }
                 self.adapter = AdapterConfig(**adapter_config)
             
-            # Load logging config
+            # Load logging config with safe conversion
             if 'logging' in data:
                 logging_data = data['logging']
-                # Validate and convert logging data
+                # Ensure proper string types for required fields
+                default_format = (
+                    '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+                )
                 logging_config = {
-                    'level': str(logging_data.get('level', 'INFO')),
-                    'format': str(logging_data.get('format', '%(asctime)s - %(name)s - %(levelname)s - %(message)s')),
-                    'file': str(logging_data['file']) if logging_data.get('file') else None
+                    'level': str(logging_data.get('level') or 'INFO'),
+                    'format': str(
+                        logging_data.get('format') or default_format
+                    ),
+                    'file': (
+                        str(logging_data['file'])
+                        if logging_data.get('file') else None
+                    )
                 }
                 self.logging = LoggingConfig(**logging_config)
             
-            # Load FORScan config
+            # Load FORScan config with safe conversion
             if 'forscan' in data:
                 forscan_data = data['forscan']
-                # Validate and convert FORScan data
+                # Ensure proper types with safe conversion
                 forscan_config = {
-                    'executable_path': str(forscan_data['executable_path']) if forscan_data.get('executable_path') else None,
-                    'data_dir': str(forscan_data.get('data_dir', './data')),
-                    'config_dir': str(forscan_data.get('config_dir', './config')),
-                    'auto_connect': bool(forscan_data.get('auto_connect', False))
+                    'executable_path': (
+                        str(forscan_data['executable_path'])
+                        if forscan_data.get('executable_path') else None
+                    ),
+                    'data_dir': str(
+                        forscan_data.get('data_dir') or './data'
+                    ),
+                    'config_dir': str(
+                        forscan_data.get('config_dir') or './config'
+                    ),
+                    'auto_connect': self._safe_bool(
+                        forscan_data.get('auto_connect'), False
+                    )
                 }
                 self.forscan = FORScanConfig(**forscan_config)
             
@@ -203,14 +227,10 @@ class Config:
         section_name: str
     ) -> None:
         """Update dataclass section with filtered values and warn on extras."""
-        if not isinstance(values, dict):
-            logger.warning(
-                "Ignoring %s configuration because it is not a mapping", section_name
-            )
-            return
-        
         allowed_fields = {field.name for field in fields(section)}
-        filtered_values = {key: values[key] for key in values if key in allowed_fields}
+        filtered_values = {
+            key: values[key] for key in values if key in allowed_fields
+        }
         
         for key, value in filtered_values.items():
             setattr(section, key, value)
@@ -257,12 +277,61 @@ class Config:
             if hasattr(self.forscan, key):
                 setattr(self.forscan, key, value)
     
+    def _safe_int(
+        self, value: str | int | float | bool | None, 
+        default: int
+    ) -> int:
+        """Safely convert value to int with fallback."""
+        try:
+            if value is None:
+                return default
+            return int(value)
+        except (ValueError, TypeError):
+            logger.warning(
+                f"Invalid int value {value}, using default {default}"
+            )
+            return default
+    
+    def _safe_float(
+        self, value: str | int | float | bool | None,
+        default: float
+    ) -> float:
+        """Safely convert value to float with fallback."""
+        try:
+            if value is None:
+                return default
+            return float(value)
+        except (ValueError, TypeError):
+            logger.warning(
+                f"Invalid float value {value}, using default {default}"
+            )
+            return default
+    
+    def _safe_bool(
+        self, value: str | int | float | bool | None,
+        default: bool
+    ) -> bool:
+        """Safely convert value to bool with fallback."""
+        try:
+            if value is None:
+                return default
+            if isinstance(value, bool):
+                return value
+            if isinstance(value, str):
+                return value.lower() in ('true', '1', 'yes', 'on')
+            return bool(value)
+        except (ValueError, TypeError):
+            logger.warning(
+                f"Invalid bool value {value}, using default {default}"
+            )
+            return default
+    
     def setup_logging(self) -> None:
         """Setup logging based on configuration."""
         log_level = getattr(logging, self.logging.level.upper(), logging.INFO)
         
-        # Configure logging with proper typing
-        logging_config: dict[str, str | int] = {
+        # Build configuration with explicit types
+        config_args: dict[str, str | int] = {
             'level': log_level,
             'format': self.logging.format
         }
@@ -273,7 +342,12 @@ class Config:
             if log_dir:
                 os.makedirs(log_dir, exist_ok=True)
             
-            logging_config['filename'] = self.logging.file
+            config_args['filename'] = self.logging.file
         
-        logging.basicConfig(**logging_config)
+        # Type-safe logging configuration
+        logging.basicConfig(
+            level=config_args['level'],
+            format=str(config_args['format']),
+            filename=str(config_args.get('filename')) if 'filename' in config_args else None
+        )
         logger.info("Logging configured")
