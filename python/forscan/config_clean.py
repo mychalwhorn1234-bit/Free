@@ -5,13 +5,14 @@ Configuration management for FORScan Python tools.
 import os
 import yaml
 import logging
-from dataclasses import dataclass, asdict, fields
+from dataclasses import dataclass, asdict
+from typing import Any, Dict, Union, Optional
 
 
 logger = logging.getLogger(__name__)
 
 # Type alias for configuration data
-ConfigData = dict[str, dict[str, str | int | float | bool | None]]
+ConfigData = Dict[str, Any]
 
 
 @dataclass
@@ -28,13 +29,13 @@ class LoggingConfig:
     """Logging configuration."""
     level: str = 'INFO'
     format: str = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    file: str | None = None
+    file: Optional[str] = None
 
 
 @dataclass
 class FORScanConfig:
     """FORScan application configuration."""
-    executable_path: str | None = None
+    executable_path: Optional[str] = None
     data_dir: str = './data'
     config_dir: str = './config'
     auto_connect: bool = False
@@ -77,15 +78,14 @@ class Config:
             
         except Exception as e:
             logger.error(f"Failed to load configuration: {e}")
-    
     def _load_yaml_data(self) -> ConfigData:
         """Load and validate YAML data from config file."""
-        with open(self.config_file, 'r') as f:
+        with open(self.config_file, 'r', encoding='utf-8') as f:
             # Load raw YAML data as Any type first
-            raw_data = yaml.safe_load(f)
+            raw_data: Any = yaml.safe_load(f)
             # Ensure we have a valid nested dictionary structure
             if isinstance(raw_data, dict):
-                return raw_data  # type: ignore[return-value]
+                return raw_data
             return {}
     
     def _load_adapter_config(self, data: ConfigData) -> None:
@@ -172,12 +172,10 @@ class Config:
                 'logging': asdict(self.logging),
                 'forscan': asdict(self.forscan)
             }
-            
-            with open(self.config_file, 'w') as f:
+            with open(self.config_file, 'w', encoding='utf-8') as f:
                 yaml.dump(data, f, default_flow_style=False, indent=2)
             
             logger.info(f"Configuration saved to {self.config_file}")
-            
         except Exception as e:
             logger.error(f"Failed to save configuration: {e}")
     
@@ -254,7 +252,7 @@ class Config:
         
         return errors
     
-    def get_config_dict(self) -> dict[str, dict[str, str | int | float | bool | None]]:
+    def get_config_dict(self) -> Dict[str, Any]:
         """Get configuration as dictionary."""
         return {
             'adapter': asdict(self.adapter),
@@ -263,7 +261,7 @@ class Config:
         }
     
     def _safe_int(
-        self, value: str | int | float | bool | None,
+        self, value: Union[str, int, float, bool, None],
         default: int
     ) -> int:
         """Safely convert value to int with fallback."""
@@ -278,7 +276,7 @@ class Config:
             return default
     
     def _safe_float(
-        self, value: str | int | float | bool | None,
+        self, value: Union[str, int, float, bool, None],
         default: float
     ) -> float:
         """Safely convert value to float with fallback."""
@@ -293,7 +291,7 @@ class Config:
             return default
     
     def _safe_bool(
-        self, value: str | int | float | bool | None,
+        self, value: Union[str, int, float, bool, None],
         default: bool
     ) -> bool:
         """Safely convert value to bool with fallback."""
@@ -316,7 +314,7 @@ class Config:
         log_level = getattr(logging, self.logging.level.upper(), logging.INFO)
         
         # Build configuration with explicit types
-        config_args: dict[str, str | int] = {
+        config_args: Dict[str, Union[str, int]] = {
             'level': log_level,
             'format': self.logging.format
         }
