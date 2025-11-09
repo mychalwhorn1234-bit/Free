@@ -12,10 +12,10 @@ from forscan.adapters import (
 class TestBaseAdapter:
     """Test base adapter functionality."""
     
-    def test_base_adapter_is_abstract(self) -> None:
+    def test_base_adapter_is_abstract(self):
         """Test that BaseAdapter cannot be instantiated directly."""
         with pytest.raises(TypeError):
-            _ = BaseAdapter("COM1")
+            BaseAdapter("COM1")
 
 
 class TestELM327Adapter:
@@ -39,7 +39,7 @@ class TestELM327Adapter:
         assert adapter.baudrate == 38400
     
     @patch('forscan.adapters.serial.Serial')
-    def test_connect_success(self, mock_serial: Mock) -> None:
+    def test_connect_success(self, mock_serial):
         """Test successful ELM327 connection."""
         # Mock serial connection
         mock_connection = Mock()

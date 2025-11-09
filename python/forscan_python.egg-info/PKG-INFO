@@ -57,11 +57,39 @@ Dynamic: summary
 
 ## ⚙️ Installation Instructions
 
+### Windows Executable (Recommended for end users)
+
 ```text
 1. 📦 Download from Releases  
 2. 📁 Extract to any folder  
 3. 🖱 Run the .exe  
 4. ✅ Done!
+```
+
+### Docker Setup (For developers and automation)
+
+```powershell
+# 1. Install Docker Desktop for Windows
+.\docker-install.ps1
+
+# 2. Start Python automation service
+docker-compose up -d forscan-python
+
+# 3. Test the setup
+docker-compose exec forscan-python python -m forscan.cli info
+```
+
+### Python Development Setup
+
+```powershell
+# 1. Install Python dependencies
+pip install -r requirements.txt
+
+# 2. Test the Python tools
+python -m forscan.cli --help
+
+# 3. Run diagnostics
+python -m forscan.cli scan --adapter ELM327 --port COM1
 ```
 
 ---

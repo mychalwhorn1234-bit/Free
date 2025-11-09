@@ -2,7 +2,7 @@
 Tests for FORScan core functionality.
 """
 
-from typing import Dict, Any
+import pytest
 from forscan.core import FORScanConnector, VehicleInfo
 
 
@@ -17,7 +17,7 @@ class TestFORScanConnector:
         assert connector.connected is False
         assert connector.vehicle_info is None
     
-    def test_init_with_config(self, sample_config: Dict[str, Any]) -> None:
+    def test_init_with_config(self, sample_config):
         """Test connector initialization with configuration."""
         connector = FORScanConnector(sample_config)
         

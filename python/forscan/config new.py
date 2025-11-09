@@ -274,7 +274,7 @@ class Config:
         if self.forscan.executable_path:
             if not self._safe_path_exists(self.forscan.executable_path):
                 errors.append(
-                    f"FORScan executable not found or inaccessible: "
+                    "FORScan executable not found or inaccessible: "
                     + f"{self.forscan.executable_path}"
                 )
         
@@ -374,4 +374,7 @@ class Config:
                 if 'filename' in config_args else None
             )
         )
+        # Re-acquire logger after configuring logging
+        global logger
+        logger = logging.getLogger(__name__)
         logger.info("Logging configured")
