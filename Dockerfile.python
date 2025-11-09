@@ -1,0 +1,91 @@
+# Multi-stage Dockerfile supporting both Windows and Python environments
+
+# Stage 1: Windows container for FORScan
+FROM mcr.microsoft.com/windows/servercore:ltsc2022 AS windows-forscan
+
+# Set PowerShell as the default shell
+SHELL ["powershell", "-Command", "$ErrorActionPreference = 'Stop'; $ProgressPreference = 'SilentlyContinue';"]
+
+# Set working directory using Windows path conventions
+WORKDIR C:\\app
+
+# Copy application files
+COPY . .
+
+# Install any required Windows dependencies and setup FORScan environment
+RUN Write-Host 'Setting up FORScan environment...'; New-Item -ItemType Directory -Force -Path C:\\app\\forscan
+
+# Set environment variables for Windows
+ENV FORSCAN_PORTABLE=true
+ENV FORSCAN_DATA_DIR=C:\\app\\forscan\\data
+ENV FORSCAN_CONFIG_DIR=C:\\app\\forscan\\config
+
+# Health check using PowerShell
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD powershell -Command "if (Test-Path 'C:\\app\\forscan') { exit 0 } else { exit 1 }"
+
+# Default command to run FORScan
+CMD ["powershell", "-Command", "Write-Host 'FORScan container ready'; Start-Sleep -Seconds 3600"]
+
+# Stage 2: Python environment for automation and scripting
+FROM python:3.11-slim AS python-env
+
+# Set working directory
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy Python requirements and install dependencies
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy Python source code
+COPY python/ ./python/
+COPY scripts/ ./scripts/
+
+# Set environment variables
+ENV PYTHONPATH=/app
+ENV FORSCAN_PYTHON_ENV=true
+
+# Create directories for data and logs
+RUN mkdir -p /app/data /app/logs /app/config
+
+# Health check for Python environment
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD python -c "import sys; sys.exit(0)"
+
+# Default command
+CMD ["python", "-c", "print('Python environment ready for FORScan automation'); import time; time.sleep(3600)"]
+
+# Stage 3: Development environment with both Python and Windows tools
+FROM python:3.11-slim AS development
+
+WORKDIR /app
+
+# Install development tools
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    vim \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies including development tools
+COPY requirements-dev.txt ./
+RUN pip install --no-cache-dir -r requirements-dev.txt
+
+# Copy all source files
+COPY . .
+
+# Set environment variables for development
+ENV PYTHONPATH=/app
+ENV FORSCAN_DEBUG=true
+ENV FORSCAN_PYTHON_ENV=true
+
+# Expose common development ports
+EXPOSE 8000 5000
+
+CMD ["python", "-c", "print('Development environment ready'); import time; time.sleep(3600)"]

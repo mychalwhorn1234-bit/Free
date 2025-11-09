@@ -7,7 +7,7 @@
 
 ## ⚙️ Installation Instructions
 
-```
+```text
 1. 📦 Download from Releases  
 2. 📁 Extract to any folder  
 3. 🖱 Run the .exe  
@@ -83,6 +83,7 @@ FORScan is the only diagnostic platform tailored for Ford Group vehicles — and
 
 ---
 
-## 🔍 SEO Keywords  
+## 🔍 SEO Keywords
+
 FORScan Portable, FORScan 2.4.9, Ford diagnostics tool, Mazda OBD2 scanner, FORScan no install, ELM327 FORScan tool, Lincoln OBD software, FORScan USB version, Central Configuration Ford, enable hidden features Ford, service procedures FORScan, FORScan dashboard live data, MS-CAN HS-CAN switch, FORScan tire size, Ford DRL config tool, reset BMS battery monitor, PCM diagnostics portable, FORScan Bluetooth adapter, Ford firmware update tool, FORScan configuration editor, FORScan Windows 11, STN adapter FORScan, FORScan offline version
 

@@ -1,0 +1,22 @@
+# Default configuration for FORScan Python tools
+# Copy this file to forscan_config.yaml and customize as needed
+
+# Adapter configuration
+adapter:
+  type: "ELM327"  # ELM327, J2534, or STN
+  port: "COM1"    # Communication port (Windows: COM1, Linux: /dev/ttyUSB0)
+  baudrate: 38400 # Baud rate for serial communication
+  timeout: 2.0    # Connection timeout in seconds
+
+# Logging configuration
+logging:
+  level: "INFO"   # DEBUG, INFO, WARNING, ERROR
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: null      # Optional log file path, null for console only
+
+# FORScan integration configuration
+forscan:
+  executable_path: null      # Path to FORScan executable (optional)
+  data_dir: "./data"         # Directory for data files
+  config_dir: "./config"     # Directory for configuration files
+  auto_connect: false        # Automatically connect on startup
