@@ -5,6 +5,7 @@ Adapter implementations for different OBD interfaces.
 import logging
 import time
 from abc import ABC, abstractmethod
+from typing import override
 import serial
 
 logger = logging.getLogger(__name__)
@@ -21,10 +22,10 @@ class BaseAdapter(ABC):
             port: Communication port
             baudrate: Baud rate for serial communication
         """
-        self.port = port
-        self.baudrate = baudrate
+        self.port: str = port
+        self.baudrate: int = baudrate
         self.connection: serial.Serial | None = None
-        self.connected = False
+        self.connected: bool = False
     
     @abstractmethod
     def connect(self) -> bool:
@@ -54,14 +55,15 @@ class ELM327Adapter(BaseAdapter):
             baudrate: Baud rate (default 38400 for ELM327)
         """
         super().__init__(port, baudrate)
-        self.protocol = "AUTO"
+        self.protocol: str = "AUTO"
         
+    @override
     def connect(self) -> bool:
         """
         Connect to ELM327 adapter.
         
         Returns:
-            True if connection successful, False otherwise
+            bool: True if connection successful, False otherwise
         """
         try:
             logger.info(f"Connecting to ELM327 on {self.port}")
@@ -83,6 +85,7 @@ class ELM327Adapter(BaseAdapter):
             logger.error(f"Failed to connect to ELM327: {e}")
             return False
     
+    @override
     def disconnect(self) -> None:
         """Disconnect from ELM327 adapter."""
         if self.connection and self.connection.is_open:
@@ -90,6 +93,7 @@ class ELM327Adapter(BaseAdapter):
             self.connected = False
             logger.info("ELM327 disconnected")
     
+    @override
     def send_command(self, command: str) -> str:
         """
         Send AT command to ELM327.
@@ -105,7 +109,7 @@ class ELM327Adapter(BaseAdapter):
         
         try:
             # Send command
-            self.connection.write(f"{command}\r".encode())
+            _ = self.connection.write(f"{command}\r".encode())
             
             # Read response
             response = ""
@@ -133,7 +137,7 @@ class ELM327Adapter(BaseAdapter):
         ]
         
         for cmd in init_commands:
-            self.send_command(cmd)
+            _ = self.send_command(cmd)
             time.sleep(0.1)
 
 
@@ -148,10 +152,11 @@ class J2534Adapter(BaseAdapter):
             device_name: Name of J2534 device
         """
         super().__init__("", 0)  # J2534 doesn't use serial ports
-        self.device_name = device_name
+        self.device_name: str = device_name
         self.device_id: int | None = None
         self.channel_id: int | None = None
     
+    @override
     def connect(self) -> bool:
         """
         Connect to J2534 adapter.
@@ -175,6 +180,7 @@ class J2534Adapter(BaseAdapter):
             logger.error(f"Failed to connect to J2534: {e}")
             return False
     
+    @override
     def disconnect(self) -> None:
         """Disconnect from J2534 adapter."""
         if self.connected:
@@ -184,6 +190,7 @@ class J2534Adapter(BaseAdapter):
             self.connected = False
             logger.info("J2534 disconnected")
     
+    @override
     def send_command(self, command: str) -> str:
         """
         Send command via J2534.
@@ -215,6 +222,7 @@ class STNAdapter(BaseAdapter):
         """
         super().__init__(port, baudrate)
     
+    @override
     def connect(self) -> bool:
         """
         Connect to STN adapter.
@@ -242,6 +250,7 @@ class STNAdapter(BaseAdapter):
             logger.error(f"Failed to connect to STN: {e}")
             return False
     
+    @override
     def disconnect(self) -> None:
         """Disconnect from STN adapter."""
         if self.connection and self.connection.is_open:
@@ -249,6 +258,7 @@ class STNAdapter(BaseAdapter):
             self.connected = False
             logger.info("STN disconnected")
     
+    @override
     def send_command(self, command: str) -> str:
         """
         Send command to STN adapter.
@@ -264,7 +274,7 @@ class STNAdapter(BaseAdapter):
         
         try:
             # Send command
-            self.connection.write(f"{command}\r".encode())
+            _ = self.connection.write(f"{command}\r".encode())
             
             # Read response
             response = self.connection.readline().decode().strip()
@@ -284,5 +294,5 @@ class STNAdapter(BaseAdapter):
         ]
         
         for cmd in init_commands:
-            self.send_command(cmd)
+            _ = self.send_command(cmd)
             time.sleep(0.1)
